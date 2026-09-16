@@ -420,6 +420,7 @@ private fun AppSelectionCard(packageName: String, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
+            .padding(top = 8.dp)
     ) {
         Row(
             Modifier.padding(12.dp),
