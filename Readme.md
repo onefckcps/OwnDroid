@@ -6,18 +6,18 @@
 
 ## Why this fork
 
-Most app blocker apps merely register as a *device administrator* to restrict app usage — but any user can simply deactivate that again in system settings. Even blockers advertising protection against this can often be tricked by hitting the deactivate button faster than the app can detect it and close the settings screen.
+Most app blocker apps merely register as a *device administrator* to restrict app usage - but any user can simply deactivate that again in system settings. Even blockers advertising protection against this can often be tricked by hitting the deactivate button faster than the app can detect it and close the settings screen.
 
 This fork uses **Device Owner** privileges instead, which cannot be revoked from system settings:
 
 - **Time Blocker**: per-app daily usage limits and blocked/allowed time windows with per-weekday scheduling, enforced by suspending apps via `DevicePolicyManager`
-- **TOTP-protected app lock**: block apps and hand the TOTP secret to another person — then you genuinely cannot unlock them yourself
+- **TOTP-protected app lock**: block apps and hand the TOTP secret to another person - then you genuinely cannot unlock them yourself
 - **QR settings sync**: transfer blocker rules and the TOTP secret between devices (e.g. phone → tablet) without any server or cloud
 
 Combined with OwnDroid's existing Device Owner features, you can build a complete self-restriction setup that actually holds up:
 
 - **Block uninstallation** of the apps that matter (including OwnDroid itself)
-- Enforce **Always-on VPN** or **Private DNS** (e.g. a family-filter or ad-block DNS) to filter content network-wide — the user cannot switch them off
+- Enforce **Always-on VPN** or **Private DNS** (e.g. a family-filter or ad-block DNS) to filter content network-wide - the user cannot switch them off
 - Apply **user restrictions** (e.g. disallow installing apps) that stay in effect
 
 ---
