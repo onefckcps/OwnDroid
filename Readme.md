@@ -2,6 +2,26 @@
 
 # OwnDroid
 
+> **This is a fork** of [BinTianqi/OwnDroid](https://github.com/BinTianqi/OwnDroid) with additional features focused on **tamper-proof app and content blocking**. Both features are submitted upstream: [#358 Time Blocker](https://github.com/BinTianqi/OwnDroid/pull/358), [#359 QR settings sync](https://github.com/BinTianqi/OwnDroid/pull/359).
+
+## Why this fork
+
+Most app blocker apps merely register as a *device administrator* to restrict app usage — but any user can simply deactivate that again in system settings. Even blockers advertising protection against this can often be tricked by hitting the deactivate button faster than the app can detect it and close the settings screen.
+
+This fork uses **Device Owner** privileges instead, which cannot be revoked from system settings:
+
+- **Time Blocker**: per-app daily usage limits and blocked/allowed time windows with per-weekday scheduling, enforced by suspending apps via `DevicePolicyManager`
+- **TOTP-protected app lock**: block apps and hand the TOTP secret to another person — then you genuinely cannot unlock them yourself
+- **QR settings sync**: transfer blocker rules and the TOTP secret between devices (e.g. phone → tablet) without any server or cloud
+
+Combined with OwnDroid's existing Device Owner features, you can build a complete self-restriction setup that actually holds up:
+
+- **Block uninstallation** of the apps that matter (including OwnDroid itself)
+- Enforce **Always-on VPN** or **Private DNS** (e.g. a family-filter or ad-block DNS) to filter content network-wide — the user cannot switch them off
+- Apply **user restrictions** (e.g. disallow installing apps) that stay in effect
+
+---
+
 Use Android's DevicePolicyManager API to manage your device.
 
 ## Download
@@ -14,8 +34,10 @@ Use Android's DevicePolicyManager API to manage your device.
 
 ## Features
 
+- **Time Blocker (fork)**: daily limits, blocked/allowed time windows per weekday, TOTP unlock
+- **Settings sync (fork)**: transfer Time Blocker rules + TOTP secret between devices via QR code
 - System: disable camera, disable screenshot, master volume mute, disable USB signal, lock task mode, wipe data...
-- Network: add/modify/delete Wi-Fi, network stats, network logging...
+- Network: add/modify/delete Wi-Fi, network stats, network logging, always-on VPN, private DNS...
 - Applications: suspend/hide app, block app uninstallation, grant/revoke permissions, clear app storage, install/uninstall app...
 - User restriction: disable SMS, disable outgoing call, disable bluetooth, disable NFC, disable USB file transfer, disable app installing/uninstalling...
 - Users: user information, create/start/switch/stop/delete user...
