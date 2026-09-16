@@ -85,6 +85,8 @@ data class AppChooserFilter(
     val mdDisabled: AppFilterState = AppFilterState.Both,
     val installed: AppFilterState = AppFilterState.Yes,
     val usesInternet: Boolean = false,
+    // Hard exclusion list set by the caller, not editable in the filter drawer
+    val excludePackages: Set<String> = emptySet(),
 )
 
 class PermissionItem(
@@ -365,7 +367,8 @@ fun filterApp(app: AppChooserEntry, filter: AppChooserFilter, query: String): Bo
                 (state == AppFilterState.Yes && item) ||
                 (state == AppFilterState.No && !item)
     }
-    return filterItem(filter.userApps, !app.info.isSystem) &&
+    return app.info.name !in filter.excludePackages &&
+            filterItem(filter.userApps, !app.info.isSystem) &&
             (!filter.hasMc || app.hasMc) && (!filter.mcModified || app.mcModified) &&
             filterItem(filter.suspended, app.suspended) &&
             filterItem(filter.hidden, app.hidden) &&

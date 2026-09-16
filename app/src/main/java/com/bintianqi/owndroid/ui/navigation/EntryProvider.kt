@@ -749,8 +749,19 @@ fun myEntryProvider(
     entry<Destination.TimeBlockerEdit>(
         metadata = navParentKey<Destination.TimeBlocker>()
     ) { params ->
+        val vm = viewModel<TimeBlockerViewModel>()
         TimeBlockerEditScreen(
-            params.ruleId, viewModel(), container.chosenPackage, ::chooseSinglePackage, ::navigateUp
+            params.ruleId, vm, container.chosenPackage, {
+                // Hide apps that already have a rule; keep the currently edited one selectable
+                val excluded = vm.rulesState.value
+                    .filter { it.id != params.ruleId }
+                    .mapTo(mutableSetOf()) { it.packageName }
+                navigate(
+                    Destination.ApplicationsList(
+                        AppChooserMode.SingleChoose, AppChooserFilter(excludePackages = excluded)
+                    )
+                )
+            }, ::navigateUp
         )
     }
 

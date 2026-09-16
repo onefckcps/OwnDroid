@@ -13,7 +13,10 @@ import com.bintianqi.owndroid.utils.PrivilegeStatus
 import com.bintianqi.owndroid.utils.ToastChannel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class TimeBlockerViewModel(
@@ -29,13 +32,34 @@ class TimeBlockerViewModel(
     /** Live service running state for the UI toggle. */
     val serviceRunning: StateFlow<Boolean> = TimeBlockerService.runningState
 
+    /** Usage persisted in the DB (from the last service run). Loaded once at init. */
+    private val persistedUsage = MutableStateFlow<Map<String, Long>>(emptyMap())
+
+    /**
+     * Today's usage per package (ms). Live data from the service while it is
+     * running; falls back to the last persisted DB values otherwise.
+     */
+    val usageToday: StateFlow<Map<String, Long>> =
+        combine(serviceRunning, TimeBlockerService.usageState, persistedUsage) { running, live, persisted ->
+            if (running) live else persisted
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
     init {
         refreshRules()
+        loadPersistedUsage()
     }
 
     fun refreshRules() {
         viewModelScope.launch(Dispatchers.IO) {
             rulesState.value = repo.getRules()
+        }
+    }
+
+    /** Load last persisted usage from DB (used as fallback when service is stopped). */
+    private fun loadPersistedUsage() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val todayEpoch = java.time.LocalDate.now().toEpochDay()
+            persistedUsage.value = repo.getUsageToday(todayEpoch)
         }
     }
 

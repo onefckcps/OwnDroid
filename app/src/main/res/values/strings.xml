@@ -794,6 +794,7 @@
     <string name="time_blocker_delete_rule">Delete rule</string>
     <string name="time_blocker_used_today">Used today: %1$s</string>
     <string name="time_blocker_remaining">Remaining: %1$s</string>
+    <string name="time_blocker_usage_format">%1$d h %2$d min</string>
     <string name="time_blocker_blocked_in_window">Outside allowed time window</string>
     <string name="time_blocker_blocked_by_limit">Daily limit exceeded</string>
     <string name="time_blocker_start_service">Start service</string>

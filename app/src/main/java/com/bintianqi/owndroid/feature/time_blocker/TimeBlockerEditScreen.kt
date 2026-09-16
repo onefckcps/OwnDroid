@@ -88,6 +88,7 @@ fun TimeBlockerEditScreen(
     onNavigateUp: () -> Unit
 ) {
     val rules by vm.rulesState.collectAsState()
+    val usage by vm.usageToday.collectAsState()
     val existingRule = if (ruleId >= 0) rules.find { it.id == ruleId } else null
 
     // Wait for rules to load when editing
@@ -216,6 +217,41 @@ fun TimeBlockerEditScreen(
             )
 
             Spacer(Modifier.height(16.dp))
+
+            // Usage today (only when a daily limit is set or editing an existing rule with limit)
+            val effectivePackage = packageName.ifEmpty { existingRule?.packageName ?: "" }
+            val effectiveLimit = dailyLimitText.toIntOrNull() ?: existingRule?.dailyLimitMinutes ?: 0
+            if (effectivePackage.isNotEmpty() && effectiveLimit > 0) {
+                val usedMs = usage[effectivePackage]
+                if (usedMs != null) {
+                    val usedMinutes = (usedMs / 60_000).toInt()
+                    Card(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text(
+                                stringResource(
+                                    R.string.time_blocker_used_today,
+                                    formatUsageMinutes(usedMinutes)
+                                ),
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                            Text(
+                                stringResource(R.string.time_blocker_daily_limit) + ": " +
+                                        stringResource(R.string.time_blocker_daily_limit_minutes, effectiveLimit),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(16.dp))
+                }
+            }
 
             // Daily limit
             OutlinedTextField(

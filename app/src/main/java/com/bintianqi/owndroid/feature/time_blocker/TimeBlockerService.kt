@@ -346,6 +346,8 @@ class TimeBlockerService : Service() {
         for (pkg in packageNames) {
             merged[pkg] = (baselineMs[pkg] ?: 0L) + (usageTodayMs[pkg] ?: 0L)
         }
+        // Publish live totals for the UI.
+        usageState.value = merged
         return merged
     }
 
@@ -451,6 +453,7 @@ class TimeBlockerService : Service() {
         coroutineScope.cancel()
         isRunning = false
         runningState.value = false
+        usageState.value = emptyMap()
 
         // Unsuspend all packages we suspended (graceful stop)
         val myApp = application as MyApplication
@@ -473,6 +476,9 @@ class TimeBlockerService : Service() {
             private set
         /** Observable running state for the UI (isRunning stays for sync checks). */
         val runningState = kotlinx.coroutines.flow.MutableStateFlow(false)
+        /** Live usage totals (baseline + self-managed) per package, in ms.
+         *  Updated after each poll cycle. Empty when the service is not running. */
+        val usageState = kotlinx.coroutines.flow.MutableStateFlow<Map<String, Long>>(emptyMap())
 
         fun start(context: Context) {
             val intent = Intent(context, TimeBlockerService::class.java)

@@ -165,8 +165,10 @@ fun TimeBlockerScreen(
                 }
             }
             items(rules, key = { it.id }) { rule ->
+                val usage by vm.usageToday.collectAsState()
                 RuleItem(
                     rule = rule,
+                    usedMs = usage[rule.packageName],
                     onToggle = { vm.toggleRuleEnabled(rule) },
                     onClick = { onNavigate(Destination.TimeBlockerEdit(rule.id)) }
                 )
@@ -200,7 +202,7 @@ fun StatusCard(title: String, subtitle: String?, isPositive: Boolean, onClick: (
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun RuleItem(rule: BlockRule, onToggle: () -> Unit, onClick: () -> Unit) {
+fun RuleItem(rule: BlockRule, usedMs: Long?, onToggle: () -> Unit, onClick: () -> Unit) {
     val context = LocalContext.current
     val pm = context.packageManager
     val (appLabel, appIcon) = remember(rule.packageName) {
@@ -234,6 +236,20 @@ fun RuleItem(rule: BlockRule, onToggle: () -> Unit, onClick: () -> Unit) {
                         style = MaterialTheme.typography.bodySmall,
                         color = colorScheme.onSurfaceVariant
                     )
+                    if (usedMs != null) {
+                        val usedMinutes = (usedMs / 60_000).toInt()
+                        val limitMs = rule.dailyLimitMinutes * 60_000L
+                        val exceeded = usedMs >= limitMs
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            stringResource(
+                                R.string.time_blocker_used_today,
+                                formatUsageMinutes(usedMinutes)
+                            ) + " / " + stringResource(R.string.time_blocker_daily_limit_minutes, rule.dailyLimitMinutes),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (exceeded) colorScheme.error else colorScheme.primary
+                        )
+                    }
                 }
                 if (rule.blockedWindows.isNotEmpty()) {
                     Text(
@@ -288,4 +304,10 @@ fun formatMinutes(totalMinutes: Int): String {
     val h = totalMinutes / 60
     val m = totalMinutes % 60
     return "%02d:%02d".format(h, m)
+}
+
+fun formatUsageMinutes(totalMinutes: Int): String {
+    val h = totalMinutes / 60
+    val m = totalMinutes % 60
+    return if (h > 0) "${h}h ${m}min" else "${m}min"
 }
