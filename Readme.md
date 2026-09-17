@@ -2,10 +2,10 @@
 
 > **This is a fork** of [BinTianqi/OwnDroid](https://github.com/BinTianqi/OwnDroid) with additional features focused on **tamper-proof app and content blocking**. Submitted upstream: [#358 Time Blocker](https://github.com/BinTianqi/OwnDroid/pull/358), [#359 QR settings sync](https://github.com/BinTianqi/OwnDroid/pull/359). Hardcore Mode is fork-only for now.
 
-<p>
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg" width="230" alt="Time Blocker overview">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpg" width="230" alt="Hardcore Mode">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.jpg" width="230" alt="Minimal launcher">
+<p align="center">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg" height="400" alt="Time Blocker overview">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpg" height="400" alt="Hardcore Mode">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.jpg" height="400" alt="Minimal launcher">
 </p>
 
 Use Android's DevicePolicyManager API to manage your device.
@@ -33,13 +33,20 @@ Combined with OwnDroid's existing Device Owner features, you can build a complet
 
 Per-app screen-time rules enforced at the system level.
 
-- **Daily limits** and **blocked/allowed time windows** per app, with per-weekday scheduling
-- Enforcement via `DevicePolicyManager` app suspension - the app simply won't open, and there is no settings screen to outrun
-- **Live usage display** per rule: wall-clock-based usage tracking that stays accurate even if the device clock was changed (UsageStats can't be trusted for this - see [tracking notes](AGENTS.md))
-- Always-on foreground service with boot receiver: blocking survives reboots
-- Overriding a rule requires unlocking the **App Lock** - with TOTP enabled and the secret held by someone else, you cannot cheat yourself
-
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpg" width="230" alt="Editing a Time Blocker rule">
+<table>
+  <tr>
+    <td>
+      <ul>
+        <li><strong>Daily limits</strong> and <strong>blocked/allowed time windows</strong> per app, with per-weekday scheduling</li>
+        <li>Enforcement via <code>DevicePolicyManager</code> app suspension - the app simply won't open, and there is no settings screen to outrun</li>
+        <li><strong>Live usage display</strong> per rule: wall-clock-based usage tracking that stays accurate even if the device clock was changed</li>
+        <li>Always-on foreground service with boot receiver: blocking survives reboots</li>
+        <li>Overriding a rule requires unlocking the <strong>App Lock</strong> - with TOTP enabled and the secret held by someone else, you cannot cheat yourself</li>
+      </ul>
+    </td>
+    <td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpg" height="400" alt="Editing a Time Blocker rule"></td>
+  </tr>
+</table>
 
 ### Hardcore Mode
 
@@ -59,25 +66,18 @@ Maximum lockdown for focus periods: everything except a chosen allowlist stops w
 
 ### QR settings sync
 
-- Export **Time Blocker rules + TOTP secret** as a QR code, scan it on another device - rules and the lock travel together, no server or cloud involved
-- Perfect for phone → tablet setups or restoring a config
-
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpg" width="230" alt="QR code export">
-
-> [!WARNING]
-> The exported QR code contains your TOTP secret. Never share it with anyone who shouldn't be able to unlock your setup.
-
-## Screenshots
-
-Store screenshots live in `fastlane/metadata/android/en-US/images/phoneScreenshots/` (they are also picked up by F-Droid/IzzyOnDroid). When adding new ones:
-
-| File | Screen | State to capture |
-|---|---|---|
-| `2.jpg` | Time Blocker overview | 2–3 rules with visible usage times, service toggle on |
-| `3.jpg` | Time Blocker rule editor | daily limit + blocked windows + weekday chips visible |
-| `4.jpg` | Hardcore Mode | active state, allowlist with apps, one schedule, DNS field |
-| `5.jpg` | Minimal launcher | black text-only home screen |
-| `6.jpg` | QR sync export | QR screen (**use a throwaway TOTP secret, never a real one!**) |
+<table>
+  <tr>
+    <td>
+      <ul>
+        <li>Export <strong>Time Blocker rules + TOTP secret</strong> as a QR code, scan it on another device - rules and the lock travel together, no server or cloud involved</li>
+        <li>Perfect for phone → tablet setups or restoring a config</li>
+      </ul>
+      <blockquote><strong>Warning:</strong> the exported QR code contains your TOTP secret. Never share it with anyone who shouldn't be able to unlock your setup.</blockquote>
+    </td>
+    <td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpg" height="400" alt="QR code export"></td>
+  </tr>
+</table>
 
 ## Features (upstream)
 
