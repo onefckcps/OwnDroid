@@ -1,8 +1,14 @@
-[简体中文](Readme-zh_CN.md) | [日本語](Readme-ja.md)
-
 # OwnDroid
 
-> **This is a fork** of [BinTianqi/OwnDroid](https://github.com/BinTianqi/OwnDroid) with additional features focused on **tamper-proof app and content blocking**. Both features are submitted upstream: [#358 Time Blocker](https://github.com/BinTianqi/OwnDroid/pull/358), [#359 QR settings sync](https://github.com/BinTianqi/OwnDroid/pull/359).
+> **This is a fork** of [BinTianqi/OwnDroid](https://github.com/BinTianqi/OwnDroid) with additional features focused on **tamper-proof app and content blocking**. Submitted upstream: [#358 Time Blocker](https://github.com/BinTianqi/OwnDroid/pull/358), [#359 QR settings sync](https://github.com/BinTianqi/OwnDroid/pull/359). Hardcore Mode is fork-only for now.
+
+<p>
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg" width="230" alt="Time Blocker overview">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpg" width="230" alt="Hardcore Mode">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.jpg" width="230" alt="Minimal launcher">
+</p>
+
+Use Android's DevicePolicyManager API to manage your device.
 
 ## Why this fork
 
@@ -11,6 +17,7 @@ Most app blocker apps merely register as a *device administrator* to restrict ap
 This fork uses **Device Owner** privileges instead, which cannot be revoked from system settings:
 
 - **Time Blocker**: per-app daily usage limits and blocked/allowed time windows with per-weekday scheduling, enforced by suspending apps via `DevicePolicyManager`
+- **Hardcore Mode**: lock the device down to an app allowlist, enforce content-filtering DNS, and optionally replace the home screen with a minimal launcher
 - **TOTP-protected app lock**: block apps and hand the TOTP secret to another person - then you genuinely cannot unlock them yourself
 - **QR settings sync**: transfer blocker rules and the TOTP secret between devices (e.g. phone → tablet) without any server or cloud
 
@@ -20,9 +27,66 @@ Combined with OwnDroid's existing Device Owner features, you can build a complet
 - Enforce **Always-on VPN** or **Private DNS** (e.g. a family-filter or ad-block DNS) to filter content network-wide - the user cannot switch them off
 - Apply **user restrictions** (e.g. disallow installing apps) that stay in effect
 
----
+## Fork features
 
-Use Android's DevicePolicyManager API to manage your device.
+### Time Blocker
+
+Per-app screen-time rules enforced at the system level.
+
+- **Daily limits** and **blocked/allowed time windows** per app, with per-weekday scheduling
+- Enforcement via `DevicePolicyManager` app suspension - the app simply won't open, and there is no settings screen to outrun
+- **Live usage display** per rule: wall-clock-based usage tracking that stays accurate even if the device clock was changed (UsageStats can't be trusted for this - see [tracking notes](AGENTS.md))
+- Always-on foreground service with boot receiver: blocking survives reboots
+- Overriding a rule requires unlocking the **App Lock** - with TOTP enabled and the secret held by someone else, you cannot cheat yourself
+
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpg" width="230" alt="Editing a Time Blocker rule">
+
+### Hardcore Mode
+
+Maximum lockdown for focus periods: everything except a chosen allowlist stops working.
+
+- **App allowlist**: while active, every app not on the list is suspended system-wide
+- Activate **manually** (1 h / 2 h / 4 h / until 06:00 / custom end time) or via **schedules** (per-weekday time windows)
+- The allowlist is **frozen while the mode is active** - no mid-session exceptions
+- **DNS protection**: enforces a Private DNS hostname (default `family.cloudflare-dns.com`) for network-wide content filtering that cannot be switched off
+- **Minimal launcher**: optionally replaces your home screen with a black, text-only launcher (clock/calendar only) while the mode is active
+- Hardcore Mode protects OwnDroid itself via the App Lock - the strength of this mode equals the strength of your App Lock setup (use TOTP with an externally stored secret for real commitment)
+
+### App Lock with TOTP
+
+- Protects OwnDroid (and thereby both blocking features) with **password, biometrics, or TOTP**
+- With **TOTP-only** configured and the secret handed to another person (or stored in an authenticator you don't control), you are genuinely locked out of your own rules
+
+### QR settings sync
+
+- Export **Time Blocker rules + TOTP secret** as a QR code, scan it on another device - rules and the lock travel together, no server or cloud involved
+- Perfect for phone → tablet setups or restoring a config
+
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpg" width="230" alt="QR code export">
+
+> [!WARNING]
+> The exported QR code contains your TOTP secret. Never share it with anyone who shouldn't be able to unlock your setup.
+
+## Screenshots
+
+Store screenshots live in `fastlane/metadata/android/en-US/images/phoneScreenshots/` (they are also picked up by F-Droid/IzzyOnDroid). When adding new ones:
+
+| File | Screen | State to capture |
+|---|---|---|
+| `2.jpg` | Time Blocker overview | 2–3 rules with visible usage times, service toggle on |
+| `3.jpg` | Time Blocker rule editor | daily limit + blocked windows + weekday chips visible |
+| `4.jpg` | Hardcore Mode | active state, allowlist with apps, one schedule, DNS field |
+| `5.jpg` | Minimal launcher | black text-only home screen |
+| `6.jpg` | QR sync export | QR screen (**use a throwaway TOTP secret, never a real one!**) |
+
+## Features (upstream)
+
+- System: disable camera, disable screenshot, master volume mute, disable USB signal, lock task mode, wipe data...
+- Network: add/modify/delete Wi-Fi, network stats, network logging, always-on VPN, private DNS...
+- Applications: suspend/hide app, block app uninstallation, grant/revoke permissions, clear app storage, install/uninstall app...
+- User restriction: disable SMS, disable outgoing call, disable bluetooth, disable NFC, disable USB file transfer, disable app installing/uninstalling...
+- Users: user information, create/start/switch/stop/delete user...
+- Password and keyguard: reset password, set screen timeout...
 
 ## Download
 
@@ -31,17 +95,6 @@ Use Android's DevicePolicyManager API to manage your device.
 
 > [!NOTE]
 > ColorOS users should download testkey version from releases on GitHub
-
-## Features
-
-- **Time Blocker (fork)**: daily limits, blocked/allowed time windows per weekday, TOTP unlock
-- **Settings sync (fork)**: transfer Time Blocker rules + TOTP secret between devices via QR code
-- System: disable camera, disable screenshot, master volume mute, disable USB signal, lock task mode, wipe data...
-- Network: add/modify/delete Wi-Fi, network stats, network logging, always-on VPN, private DNS...
-- Applications: suspend/hide app, block app uninstallation, grant/revoke permissions, clear app storage, install/uninstall app...
-- User restriction: disable SMS, disable outgoing call, disable bluetooth, disable NFC, disable USB file transfer, disable app installing/uninstalling...
-- Users: user information, create/start/switch/stop/delete user...
-- Password and keyguard: reset password, set screen timeout...
 
 ## Working modes
 
@@ -187,6 +240,9 @@ You can use Gradle in command line to build OwnDroid.
 ```
 
 (Use `./gradlew.bat` instead on Windows)
+
+> [!NOTE]
+> This fork also provides a Nix build environment (`shell.nix` / `flake.nix`) for hosts without a local JDK/Android SDK: `nix-shell --run "./gradlew assembleDebug"`.
 
 ## Contribute
 
