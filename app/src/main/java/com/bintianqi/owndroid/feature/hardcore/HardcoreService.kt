@@ -3,8 +3,10 @@ package com.bintianqi.owndroid.feature.hardcore
 import android.app.Service
 import android.app.admin.DevicePolicyManager
 import android.app.admin.IDevicePolicyManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
@@ -63,7 +65,13 @@ class HardcoreService : Service() {
         pollingJob = coroutineScope.launch {
             currentlySuspended.addAll(repo.getSuspendedByUs())
             // Check if snapshot exists → restrictions were applied before crash
-            restrictionsApplied = repo.getAllSnapshots().isNotEmpty()
+            val snapshots = repo.getAllSnapshots()
+            restrictionsApplied = snapshots.isNotEmpty()
+            // Release an orphaned launcher override (e.g. DB wiped while active). Only when no
+            // snapshot key exists — during an intentional override the key proves it.
+            if (!snapshots.containsKey("home_component")) {
+                cleanupMinimalLauncher(this@HardcoreService, ph)
+            }
 
             var wasActive = currentlySuspended.isNotEmpty() || restrictionsApplied
 
@@ -147,7 +155,16 @@ class HardcoreService : Service() {
                 } catch (e: Exception) {
                     Log.e(TAG, "Error in hardcore check", e)
                 }
-                delay(POLL_INTERVAL_MS)
+                // Adaptive delay: when a manual session is active, wake up right at expiry.
+                // Clamped to [1s, POLL_INTERVAL_MS] so we never busy-loop or overshoot.
+                val manualUntilNow = settingsRepo.data.hardcoreManualUntilEpochMs
+                val nextDelay = if (manualUntilNow > System.currentTimeMillis()) {
+                    val remaining = manualUntilNow - System.currentTimeMillis()
+                    maxOf(1_000L, minOf(POLL_INTERVAL_MS, remaining))
+                } else {
+                    POLL_INTERVAL_MS
+                }
+                delay(nextDelay)
             }
         }
 
@@ -202,10 +219,15 @@ class HardcoreService : Service() {
 
     @Suppress("PrivateApi")
     private fun applyDnsAndRestrictions(repo: HardcoreRepository, ph: com.bintianqi.owndroid.PrivilegeHelper) {
+        val settingsRepo = (application as MyApplication).container.settingsRepo
         val config = HardcoreConfig(
-            dnsHost = (application as MyApplication).container.settingsRepo.data.hardcoreDnsHost,
-            dnsEnforcementEnabled = (application as MyApplication).container.settingsRepo.data.hardcoreDnsEnforcement
+            dnsHost = settingsRepo.data.hardcoreDnsHost,
+            dnsEnforcementEnabled = settingsRepo.data.hardcoreDnsEnforcement
         )
+        // addPersistentPreferredActivity requires device owner (or dhizuku) — work-profile-only
+        // installs must not take this path even though the setting defaults to true
+        val ps = (application as MyApplication).container.privilegeState.value
+        val minimalLauncher = settingsRepo.data.hardcoreMinimalLauncher && (ps.device || ps.dhizuku)
 
         // Never overwrite an existing snapshot (retry after partial apply would capture our own state as baseline)
         if (repo.getAllSnapshots().isNotEmpty()) {
@@ -233,6 +255,18 @@ class HardcoreService : Service() {
             for (key in RESTRICTION_KEYS) {
                 snapshotEntries["restriction_$key"] = if (restrictions.getBoolean(key)) "1" else "0"
             }
+
+            // Snapshot current default home (presence of this key = launcher override was applied).
+            // The key is written even when resolveActivity fails, so apply/restore gating never diverges.
+            if (minimalLauncher) {
+                var homeComponent = ""
+                try {
+                    val homeIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+                    val ri = packageManager.resolveActivity(homeIntent, PackageManager.MATCH_DEFAULT_ONLY)
+                    homeComponent = ri?.activityInfo?.let { "${it.packageName}/${it.name}" } ?: ""
+                } catch (_: Exception) { }
+                snapshotEntries["home_component"] = homeComponent
+            }
             repo.setSnapshotBatch(snapshotEntries)
 
             // Apply DNS if enabled
@@ -256,11 +290,44 @@ class HardcoreService : Service() {
             for (key in RESTRICTION_KEYS) {
                 dpm.addUserRestriction(dar, key)
             }
+
+            // Enforce minimal launcher (snapshot already written above — crash safe)
+            if (minimalLauncher) {
+                try {
+                    // Clear any persistent preferred we set for the old launcher in a previous
+                    // restore cycle, so we don't end up with two HOME entries
+                    val oldHome = snapshotEntries["home_component"] ?: ""
+                    if (oldHome.contains("/")) {
+                        ComponentName.unflattenFromString(oldHome)?.let { oldCn ->
+                            try {
+                                dpm.clearPackagePersistentPreferredActivities(dar, oldCn.packageName)
+                            } catch (_: Exception) { }
+                        }
+                    }
+                    val cn = ComponentName(packageName, MinimalLauncherActivity::class.java.name)
+                    packageManager.setComponentEnabledSetting(
+                        cn, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP
+                    )
+                    val homeFilter = IntentFilter(Intent.ACTION_MAIN).apply {
+                        addCategory(Intent.CATEGORY_HOME)
+                        addCategory(Intent.CATEGORY_DEFAULT)
+                    }
+                    dpm.addPersistentPreferredActivity(dar, homeFilter, cn)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to enforce minimal launcher", e)
+                }
+            }
         }
     }
 
     private fun restoreDnsAndRestrictions(repo: HardcoreRepository, ph: com.bintianqi.owndroid.PrivilegeHelper) {
+        // Read snapshot first so we can pass the previous launcher to the cleanup.
+        // Cleanup is unconditional and idempotent: it must also run when the snapshot was wiped
+        // mid-session (DB downgrade/reset), otherwise the persistent preferred HOME entry would
+        // stay welded with no in-app recovery path.
         val snapshot = repo.getAllSnapshots()
+        cleanupMinimalLauncher(this, ph, snapshot["home_component"])
+
         if (snapshot.isEmpty()) return
 
         ph.safeDpmCall {
@@ -383,6 +450,74 @@ class HardcoreService : Service() {
 
         fun stop(context: Context) {
             context.stopService(Intent(context, HardcoreService::class.java))
+        }
+
+        /**
+         * Unconditional, idempotent release of the minimal launcher override: clears the persistent
+         * preferred HOME entry, disables the component, and re-establishes the previous launcher
+         * as persistent preferred so the user is never shown a chooser.
+         *
+         * No-op when the component is not enabled. The disable runs inside the same privileged
+         * scope as the clear — if the scope aborts (e.g. Dhizuku error), the component stays
+         * enabled so a later call can retry.
+         *
+         * @param previousHome Snapshot value "pkg/cls" of the launcher that was the default
+         *   before our override. When non-null and valid, it is set as persistent preferred.
+         *   Pass null for orphan-cleanup where the snapshot is already gone (system chooser
+         *   may appear once in that edge case).
+         */
+        fun cleanupMinimalLauncher(
+            context: Context,
+            ph: com.bintianqi.owndroid.PrivilegeHelper,
+            previousHome: String? = null
+        ) {
+            val pm = context.packageManager
+            val cn = ComponentName(context.packageName, MinimalLauncherActivity::class.java.name)
+            val enabled = try {
+                pm.getComponentEnabledSetting(cn) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to read launcher component state", e)
+                false
+            }
+            if (!enabled) return
+            ph.safeDpmCall {
+                try {
+                    dpm.clearPackagePersistentPreferredActivities(dar, context.packageName)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to clear persistent preferred home", e)
+                }
+                // Restore the previous launcher as persistent preferred so the system doesn't
+                // show a chooser. Skip if the stored component is our own or missing/invalid.
+                if (previousHome != null && previousHome.contains("/") &&
+                    !previousHome.startsWith(context.packageName + "/")
+                ) {
+                    try {
+                        ComponentName.unflattenFromString(previousHome)?.let { oldCn ->
+                            val homeFilter = IntentFilter(Intent.ACTION_MAIN).apply {
+                                addCategory(Intent.CATEGORY_HOME)
+                                addCategory(Intent.CATEGORY_DEFAULT)
+                            }
+                            dpm.addPersistentPreferredActivity(dar, homeFilter, oldCn)
+                            Log.d(TAG, "Restored previous launcher: $previousHome")
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to restore previous launcher as preferred", e)
+                    }
+                }
+                try {
+                    pm.setComponentEnabledSetting(
+                        cn, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP
+                    )
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to disable minimal launcher", e)
+                }
+            }
+            try {
+                val homeIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+                if (pm.resolveActivity(homeIntent, PackageManager.MATCH_DEFAULT_ONLY) == null) {
+                    Log.w(TAG, "No default home resolves after launcher cleanup; system may show chooser once")
+                }
+            } catch (_: Exception) { }
         }
     }
 }

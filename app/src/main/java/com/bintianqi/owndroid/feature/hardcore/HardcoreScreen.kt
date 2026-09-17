@@ -46,6 +46,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -88,8 +89,21 @@ fun HardcoreScreen(
     val manualUntil by vm.manualUntilState.collectAsState()
     val dnsHost by vm.dnsHostState.collectAsState()
     val dnsEnforcement by vm.dnsEnforcementState.collectAsState()
+    val minimalLauncher by vm.minimalLauncherState.collectAsState()
+    val ps by vm.application.container.privilegeState.collectAsState()
 
-    val manualActive = manualUntil > System.currentTimeMillis()
+    // Periodically refresh VM state and tick a clock so expired manual sessions disappear
+    // from the UI without requiring the user to leave and reopen the screen
+    var nowMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(15_000)
+            nowMs = System.currentTimeMillis()
+            vm.refresh()
+        }
+    }
+
+    val manualActive = manualUntil > nowMs
 
     var showActivateDialog by rememberSaveable { mutableStateOf(false) }
     var showCustomTimePicker by rememberSaveable { mutableStateOf(false) }
@@ -332,6 +346,40 @@ fun HardcoreScreen(
                     },
                     onDelete = { vm.deleteSchedule(schedule.id) }
                 )
+            }
+
+            // === Minimal launcher (device owner / dhizuku only) ===
+            if (ps.device || ps.dhizuku) {
+                item {
+                    Card(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp)
+                            .padding(top = 12.dp)
+                    ) {
+                        Row(
+                            Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    stringResource(R.string.hardcore_minimal_launcher),
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                                Text(
+                                    stringResource(R.string.hardcore_minimal_launcher_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Switch(
+                                checked = minimalLauncher,
+                                onCheckedChange = { vm.setMinimalLauncher(it) },
+                                enabled = !active
+                            )
+                        }
+                    }
+                }
             }
 
             // === DNS ===

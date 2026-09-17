@@ -25,7 +25,9 @@ data class MySettings(
     // Hardcore mode: Private DNS hostname enforced while active
     var hardcoreDnsHost: String = "family.cloudflare-dns.com",
     // Hardcore mode: whether to enforce Private DNS while active
-    var hardcoreDnsEnforcement: Boolean = true
+    var hardcoreDnsEnforcement: Boolean = true,
+    // Hardcore mode: enforce black minimal launcher as home while active
+    var hardcoreMinimalLauncher: Boolean = true
 ) {
     @Serializable
     data class Privilege(

@@ -1,6 +1,8 @@
 package com.bintianqi.owndroid
 
 import android.app.Application
+import android.content.ComponentName
+import android.content.pm.PackageManager
 import android.os.Build.VERSION
 import com.bintianqi.owndroid.utils.DhizukuException
 import com.bintianqi.owndroid.utils.NotificationUtils
@@ -57,6 +59,16 @@ class MyApplication : Application() {
                     !com.bintianqi.owndroid.feature.hardcore.HardcoreService.isRunning
                 ) {
                     com.bintianqi.owndroid.feature.hardcore.HardcoreService.start(this)
+                }
+                // Safety net: release an orphaned minimal-launcher override when no session
+                // state exists anymore (e.g. app data wiped while hardcore was active)
+                val launcherCn = ComponentName(
+                    this, com.bintianqi.owndroid.feature.hardcore.MinimalLauncherActivity::class.java
+                )
+                if (packageManager.getComponentEnabledSetting(launcherCn) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED &&
+                    !hcRepo.getAllSnapshots().containsKey("home_component")
+                ) {
+                    com.bintianqi.owndroid.feature.hardcore.HardcoreService.cleanupMinimalLauncher(this, ph)
                 }
             } catch (e: Exception) {
                 android.util.Log.e("MyApplication", "Failed to auto-start hardcore service", e)

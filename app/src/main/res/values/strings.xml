@@ -838,7 +838,7 @@
     <string name="hardcore_manual_until">Manual until %1$s</string>
     <string name="hardcore_manual_indefinite">Manual (until stopped)</string>
     <string name="hardcore_schedule_active">Schedule active</string>
-    <string name="hardcore_activate_now">Activate now</string>
+    <string name="hardcore_activate_now">Activate until…</string>
     <string name="hardcore_deactivate">Deactivate</string>
     <string name="hardcore_allowlist">Allowed apps</string>
     <string name="hardcore_add_app">Add app</string>
@@ -863,4 +863,6 @@
     <string name="hardcore_service_running_sub">Apps are being restricted. Turn off to stop.</string>
     <string name="hardcore_service_stopped_sub">Turn on to enforce hardcore mode.</string>
     <string name="hardcore_auto_schedule_hint">Will activate automatically per schedule</string>
+    <string name="hardcore_minimal_launcher">Minimal launcher</string>
+    <string name="hardcore_minimal_launcher_desc">Replace the home screen with a black, text-only launcher while hardcore mode is active. Applies on next activation.</string>
 </resources>

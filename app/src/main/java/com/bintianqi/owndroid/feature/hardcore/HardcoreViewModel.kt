@@ -33,6 +33,9 @@ class HardcoreViewModel(
     /** DNS enforcement toggle */
     val dnsEnforcementState = MutableStateFlow(true)
 
+    /** Minimal launcher toggle (device owner / dhizuku only; applies on next activation) */
+    val minimalLauncherState = MutableStateFlow(true)
+
     init {
         refresh()
     }
@@ -44,6 +47,7 @@ class HardcoreViewModel(
             manualUntilState.value = settingsRepo.data.hardcoreManualUntilEpochMs
             dnsHostState.value = settingsRepo.data.hardcoreDnsHost
             dnsEnforcementState.value = settingsRepo.data.hardcoreDnsEnforcement
+            minimalLauncherState.value = settingsRepo.data.hardcoreMinimalLauncher
         }
     }
 
@@ -129,6 +133,11 @@ class HardcoreViewModel(
     fun setDnsEnforcement(enabled: Boolean) {
         dnsEnforcementState.value = enabled
         settingsRepo.update { it.hardcoreDnsEnforcement = enabled }
+    }
+
+    fun setMinimalLauncher(enabled: Boolean) {
+        minimalLauncherState.value = enabled
+        settingsRepo.update { it.hardcoreMinimalLauncher = enabled }
     }
 
     // === Service control ===
