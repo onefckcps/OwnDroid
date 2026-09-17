@@ -103,6 +103,9 @@ fun HomeScreen(
                 HomePageItem(R.string.time_blocker, R.drawable.timer_fill0) {
                     onNavigate(Destination.TimeBlocker)
                 }
+                HomePageItem(R.string.hardcore_mode, R.drawable.block_fill0) {
+                    onNavigate(Destination.Hardcore)
+                }
             }
             Spacer(Modifier.height(BottomPadding))
         }

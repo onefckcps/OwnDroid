@@ -82,6 +82,9 @@ enum class NotificationType(
     TimeBlocker(
         14, R.string.time_blocker, R.drawable.timer_fill0, MyNotificationChannel.TimeBlocker
     ),
+    Hardcore(
+        15, R.string.hardcore_mode, R.drawable.block_fill0, MyNotificationChannel.Hardcore
+    ),
 }
 
 enum class MyNotificationChannel(val id: String, val text: Int, val importance: Int) {
@@ -90,4 +93,5 @@ enum class MyNotificationChannel(val id: String, val text: Int, val importance: 
     SecurityLogging("SecurityLogging", R.string.security_logging, NotificationManagerCompat.IMPORTANCE_MIN),
     NetworkLogging("NetworkLogging", R.string.network_logging, NotificationManagerCompat.IMPORTANCE_MIN),
     TimeBlocker("TimeBlocker", R.string.time_blocker, NotificationManagerCompat.IMPORTANCE_LOW),
+    Hardcore("Hardcore", R.string.hardcore_mode, NotificationManagerCompat.IMPORTANCE_LOW),
 }

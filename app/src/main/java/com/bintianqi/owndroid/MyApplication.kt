@@ -45,5 +45,22 @@ class MyApplication : Application() {
                 android.util.Log.e("MyApplication", "Failed to auto-start time blocker", e)
             }
         }
+
+        // Hardcore mode: restart service if schedules or manual session exist
+        // TODO: hardcoreRepo will be added to AppContainer (Wave 3)
+        if (VERSION.SDK_INT >= 24) {
+            try {
+                val hcRepo = container.hardcoreRepo
+                val hcEnabled = container.settingsRepo.data.hardcoreServiceEnabled
+                val hcManualActive = container.settingsRepo.data.hardcoreManualUntilEpochMs > System.currentTimeMillis()
+                if (hcEnabled && (hcRepo.getEnabledSchedules().isNotEmpty() || hcManualActive) &&
+                    !com.bintianqi.owndroid.feature.hardcore.HardcoreService.isRunning
+                ) {
+                    com.bintianqi.owndroid.feature.hardcore.HardcoreService.start(this)
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("MyApplication", "Failed to auto-start hardcore service", e)
+            }
+        }
     }
 }

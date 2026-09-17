@@ -51,6 +51,7 @@ app/src/main/java/com/bintianqi/owndroid/
 ├── ApiReceiver.kt          # Intent-API für externe Automation
 ├── feature/<name>/         # Features: je Model + Repository + ViewModel + Screen
 │   ├── time_blocker/       # Zeitblocker (Tageslimit, blocked/allowed Zeitfenster, FGS-Service)
+│   ├── hardcore/           # Hardcore-Modus (Allowlist, DNS-Bindung, FGS-Service)
 │   ├── settings/           # App Lock (Passwort/Biometrie/TOTP), Theme, API-Key
 │   └── ...
 ├── ui/

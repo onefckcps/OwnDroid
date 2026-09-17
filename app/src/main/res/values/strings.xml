@@ -757,6 +757,7 @@
 
     <!--Time Blocker-->
     <string name="time_blocker">Time Blocker</string>
+    <string name="hardcore_mode">Hardcore mode</string>
     <string name="time_blocker_active">Time Blocker active — %1$d apps monitored</string>
     <string name="time_blocker_rules">Blocking rules</string>
     <string name="time_blocker_add_rule">Add rule</string>
@@ -830,4 +831,36 @@
     <string name="sync_grant_camera">Grant camera permission</string>
     <string name="sync_totp_included">TOTP secret included</string>
     <string name="sync_totp_not_included">no TOTP secret</string>
+
+    <!--Hardcore Mode-->
+    <string name="hardcore_active">Active</string>
+    <string name="hardcore_inactive">Inactive</string>
+    <string name="hardcore_manual_until">Manual until %1$s</string>
+    <string name="hardcore_manual_indefinite">Manual (until stopped)</string>
+    <string name="hardcore_schedule_active">Schedule active</string>
+    <string name="hardcore_activate_now">Activate now</string>
+    <string name="hardcore_deactivate">Deactivate</string>
+    <string name="hardcore_allowlist">Allowed apps</string>
+    <string name="hardcore_add_app">Add app</string>
+    <string name="hardcore_allowlist_frozen">Allowlist is frozen while mode is active</string>
+    <string name="hardcore_schedules">Schedules</string>
+    <string name="hardcore_add_schedule">Add schedule</string>
+    <string name="hardcore_dns_host">DNS host</string>
+    <string name="hardcore_dns_enforcement">DNS protection</string>
+    <string name="hardcore_self_binding_info">Self-binding = App Lock. Configure App Lock with TOTP-only and store the secret externally. The strength of this mode equals the strength of your App Lock.</string>
+    <string name="hardcore_1_hour">1 hour</string>
+    <string name="hardcore_2_hours">2 hours</string>
+    <string name="hardcore_4_hours">4 hours</string>
+    <string name="hardcore_until_6am">Until 06:00 tomorrow</string>
+    <string name="hardcore_custom_time">Custom time</string>
+    <string name="hardcore_no_apps">No apps in allowlist</string>
+    <string name="hardcore_no_schedules">No schedules configured</string>
+    <string name="hardcore_remove_app">Remove</string>
+    <string name="hardcore_edit_schedule">Edit schedule</string>
+    <string name="hardcore_delete_schedule">Delete schedule</string>
+    <string name="hardcore_service_running">Hardcore service running</string>
+    <string name="hardcore_service_stopped">Hardcore service stopped</string>
+    <string name="hardcore_service_running_sub">Apps are being restricted. Turn off to stop.</string>
+    <string name="hardcore_service_stopped_sub">Turn on to enforce hardcore mode.</string>
+    <string name="hardcore_auto_schedule_hint">Will activate automatically per schedule</string>
 </resources>

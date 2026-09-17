@@ -248,22 +248,7 @@ class TimeBlockerService : Service() {
     }
 
     private fun isInAnyWindow(windows: List<TimeWindow>, currentMinutes: Int, dayOfWeek: Int): Boolean {
-        for (window in windows) {
-            // For midnight-wrap windows in post-midnight portion, check previous day
-            val effectiveDay = if (window.startMinutes > window.endMinutes && currentMinutes < window.endMinutes) {
-                if (dayOfWeek == 1) 7 else dayOfWeek - 1
-            } else {
-                dayOfWeek
-            }
-            if (effectiveDay !in window.daysOfWeek) continue
-            val inWindow = if (window.startMinutes <= window.endMinutes) {
-                currentMinutes in window.startMinutes until window.endMinutes
-            } else {
-                currentMinutes >= window.startMinutes || currentMinutes < window.endMinutes
-            }
-            if (inWindow) return true
-        }
-        return false
+        return windows.any { it.contains(currentMinutes, dayOfWeek) }
     }
 
     /**

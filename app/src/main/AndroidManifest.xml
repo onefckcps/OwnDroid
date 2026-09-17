@@ -156,6 +156,10 @@
             android:name=".feature.time_blocker.TimeBlockerService"
             android:exported="false"
             android:foregroundServiceType="specialUse" />
+        <service
+            android:name=".feature.hardcore.HardcoreService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
 
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
@@ -183,6 +187,13 @@
         </receiver>
         <receiver
             android:name=".feature.time_blocker.TimeBlockerBootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".feature.hardcore.HardcoreBootReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

@@ -111,6 +111,8 @@ import com.bintianqi.owndroid.feature.work_profile.WorkProfileScreen
 import com.bintianqi.owndroid.feature.time_blocker.TimeBlockerEditScreen
 import com.bintianqi.owndroid.feature.time_blocker.TimeBlockerScreen
 import com.bintianqi.owndroid.feature.time_blocker.TimeBlockerViewModel
+import com.bintianqi.owndroid.feature.hardcore.HardcoreScreen
+import com.bintianqi.owndroid.feature.hardcore.HardcoreViewModel
 import com.bintianqi.owndroid.ui.screen.HomeScreen
 import com.bintianqi.owndroid.utils.viewModelFactory
 
@@ -762,6 +764,15 @@ fun myEntryProvider(
                     )
                 )
             }, ::navigateUp
+        )
+    }
+
+    entry<Destination.Hardcore> {
+        HardcoreScreen(
+            viewModel(factory = container.viewModelFactory),
+            container.chosenPackage,
+            ::choosePackage,
+            ::navigateUp
         )
     }
 

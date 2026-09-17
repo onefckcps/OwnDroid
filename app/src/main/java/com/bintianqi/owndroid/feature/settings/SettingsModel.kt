@@ -17,7 +17,15 @@ data class MySettings(
     val api: Api = Api(),
     // Whether the time blocker service should run. Default true: the service is
     // meant to be always-on once rules exist, unless the user explicitly stops it.
-    var timeBlockerServiceEnabled: Boolean = true
+    var timeBlockerServiceEnabled: Boolean = true,
+    // Hardcore mode: manual session end (epoch ms, 0 = no manual session)
+    var hardcoreManualUntilEpochMs: Long = 0,
+    // Whether the hardcore service should run (like timeBlockerServiceEnabled)
+    var hardcoreServiceEnabled: Boolean = true,
+    // Hardcore mode: Private DNS hostname enforced while active
+    var hardcoreDnsHost: String = "family.cloudflare-dns.com",
+    // Hardcore mode: whether to enforce Private DNS while active
+    var hardcoreDnsEnforcement: Boolean = true
 ) {
     @Serializable
     data class Privilege(
